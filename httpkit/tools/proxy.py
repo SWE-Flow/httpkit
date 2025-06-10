@@ -9,6 +9,7 @@ from fastapi.responses import StreamingResponse
 import uvicorn
 from typing import List, Dict, Any, Optional
 import asyncio
+import os
 from contextlib import asynccontextmanager
 
 # Global httpx client
@@ -64,9 +65,12 @@ async def startup_event():
     """Initialize global resources on application startup."""
     global http_client, request_semaphore
     
+    # Get timeout from environment variable or use default
+    timeout_seconds = float(os.environ.get("HTTPKIT_TIMEOUT_SECONDS", 30.0))
+    
     # Initialize the global HTTP client with HTTP/2 support and increased limits
     http_client = httpx.AsyncClient(
-        timeout=30.0,
+        timeout=timeout_seconds,
         # Only enable HTTP/2 if h2 package is installed
         http2=False,  # Changed to False by default to avoid dependency issues
         limits=httpx.Limits(
@@ -76,8 +80,11 @@ async def startup_event():
         )
     )
     
+    # Get max concurrent requests from environment variable or use default
+    max_concurrent_requests = int(os.environ.get("HTTPKIT_MAX_CONCURRENT_REQUESTS", MAX_CONCURRENT_REQUESTS))
+    
     # Initialize the request semaphore
-    request_semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
+    request_semaphore = asyncio.Semaphore(max_concurrent_requests)
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -220,6 +227,29 @@ def main():
     """Run the proxy server."""
     import os
     import importlib.util
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="HTTPKit Proxy Server")
+    parser.add_argument("--max-concurrent-requests", type=int, 
+                        help="Maximum number of concurrent requests (default: 100)")
+    parser.add_argument("--timeout", type=float, 
+                        help="HTTP client timeout in seconds (default: 30.0)")
+    args = parser.parse_args()
+    
+    # Get configuration from environment variables or command line arguments
+    # Command line arguments take precedence over environment variables
+    global MAX_CONCURRENT_REQUESTS, request_semaphore, http_client
+    
+    max_concurrent_requests = args.max_concurrent_requests or \
+                             int(os.environ.get("HTTPKIT_MAX_CONCURRENT_REQUESTS", MAX_CONCURRENT_REQUESTS))
+    timeout_seconds = args.timeout or \
+                     float(os.environ.get("HTTPKIT_TIMEOUT_SECONDS", 30.0))
+    
+    # Update the global MAX_CONCURRENT_REQUESTS
+    MAX_CONCURRENT_REQUESTS = max_concurrent_requests
+    # Initialize the request semaphore with the new value
+    request_semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
     
     # Disable reload in production for better performance
     reload = os.environ.get("HTTPKIT_ENV", "development").lower() == "development"
@@ -228,11 +258,20 @@ def main():
     h2_installed = importlib.util.find_spec("h2") is not None
     
     # Override the global HTTP client with HTTP/2 support if available
-    global http_client
     if h2_installed:
         http_client = httpx.AsyncClient(
-            timeout=30.0,
+            timeout=timeout_seconds,
             http2=True,
+            limits=httpx.Limits(
+                max_connections=200,
+                max_keepalive_connections=50,
+                keepalive_expiry=30.0
+            )
+        )
+    else:
+        http_client = httpx.AsyncClient(
+            timeout=timeout_seconds,
+            http2=False,
             limits=httpx.Limits(
                 max_connections=200,
                 max_keepalive_connections=50,
