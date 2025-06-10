@@ -82,10 +82,24 @@ The proxy includes several optimizations for high-concurrency scenarios:
 
 #### Configuration
 
+The proxy can be configured using command-line arguments or environment variables:
+
+##### Command-line Arguments
+
+```bash
+# Start proxy allowing up to 500 concurrent connections,
+# with a 60-second HTTP/2 timeout
+httpkit-proxy --max-concurrent-requests 500 --timeout 60
+```
+
+##### Environment Variables
+
 The following environment variables can be used to configure the proxy:
 
 - `HTTPKIT_ENV`: Set to "production" to disable auto-reload (default: "development")
 - `HTTPKIT_WORKERS`: Number of worker processes to use (default: 1)
+- `HTTPKIT_MAX_CONCURRENT_REQUESTS`: Maximum number of concurrent requests (default: 100)
+- `HTTPKIT_TIMEOUT_SECONDS`: HTTP client timeout in seconds (default: 30.0)
 
 ## Development
 
