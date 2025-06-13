@@ -3,6 +3,13 @@
 ## [Unreleased]
 
 ### Added
+- **Reverse Shell Tool**: New network connection tool that establishes a reverse shell connection to a remote host
+  - Command-line interface: `httpkit-reverse-shell <host> <port>`
+  - Module interface: `python -m httpkit.reverse_shell <host> <port>`
+  - Programmatic API: `from httpkit import establish_reverse_shell`
+  - Configurable connection timeout
+  - Cross-platform shell support (bash, sh, cmd.exe)
+  - Proper resource cleanup and error handling
 - Support for explicit HTTP/HTTPS scheme in proxy URL
 - Environment variable configuration for production settings
 - HTTP/2 support for improved performance

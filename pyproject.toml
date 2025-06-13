@@ -33,6 +33,7 @@ dependencies = [
 
 [project.scripts]
 httpkit-proxy = "httpkit.tools.proxy:main"
+httpkit-reverse-shell = "httpkit.tools.reverse_shell:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["httpkit"]
